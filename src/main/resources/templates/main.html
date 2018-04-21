@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=”shortcut icon” href=”favicon.ico”>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel=”shortcut icon” href="./assets/img/favicon.ico">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>서울시 문화행사 찾기</title>
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- 부트스트랩 -->
+    <link rel="stylesheet" href="./assets/lib/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="./assets/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- <script src="https://unpkg.com/vue"></script> -->
+
+    <!-- Moment.js -->
+    <script type="text/javascript" src="./assets/lib/moment.js"></script>
+
+    <!-- 부트스트랩 스위치 -->
+    <link rel="stylesheet" href="./assets/lib/bootstrap-switch/bootstrap-switch.min.css" />
+    <script type="text/javascript" src="./assets/lib/bootstrap-switch/bootstrap-switch.min.js"></script>
+
+    <!-- bar-rating -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="./assets/lib/bar-rating/fontawesome-stars.css" />
+    <script type="text/javascript" src="./assets/lib/bar-rating/jquery.barrating.min.js"></script>
+
+    <!-- select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+
+
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="./assets/css/css_reset.css">
+    <link rel="stylesheet" href="./assets/css/base.css">
+    <link rel="stylesheet" href="./assets/css/eventseoul.css?ver=1.2">
+    <link rel="stylesheet" href="./assets/css/customer.css">
+    <!-- 커스텀 JS -->
+    <script type="text/javascript" src="./assets/js/comm.js?ver=1.2"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116953318-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-116953318-1');        
+        
+    </script>
+</head>
+<script>
+
+$(document).ready(function(){
+    
+    // nav app 
+    var navApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#navApp'
+        , data : {
+            user_id : ''
+            , user_email : ''
+            , login_tp: ''
+            , is_setting_active: false
+        }
+        , methods: {
+            onSettings: function(){
+                this.is_setting_active = !this.is_setting_active;
+            }
+
+            , settings_close: function(){
+                this.is_setting_active = false;
+            }
+        }
+    });
+
+    // footer app
+    var footerApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#footerApp'
+        , data : {
+          lastUpdateDate : ''
+        }        
+        , methods: {
+            getLastUpdateDate: function(){
+                var self = this;
+                // 페이지 조회 로드 수                
+                var url = './api/batch/SeoulEvent/lastdate-batchSeoulEvent';                                 
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    self.lastUpdateDate = res;
+                })
+            }
+        }
+    })
+    footerApp.getLastUpdateDate();
+})
+</script>
+<body>
+
+
+
+    <!-- 로딩 폼 -->
+    <div class="loading_form">
+        <div class="bg"></div>
+        <div class="loader"></div>
+    </div>
+
+    <div class="nav nav-custom headAndFoot" id="navApp" v-cloak>
+        <div class="header" style='text-align:center;'>
+            <!--<div class="container">-->
+                <div class="menu_list">
+                    <a href="./"><div class="logo">Doing</div></a>
+                </div>
+                
+                <div style='display: inline-block;margin:0 auto;color: #337ab7'>
+                              서울-문화행사정보
+                </div>
+                
+                <div class="private_mylist">
+                   <a href="./mylist/">
+                       <button class="btn btn-primary">MY LIST</button>
+                   </a>
+                </div>
+        </div>
+    </div>
+
+    <div class="body_sec">
+
+<script th:inline="javascript">
+	var getSubjcode   = /*[[${subjcode}]]*/ '';
+	if(getSubjcode == null) getSubjcode = "ALL";
+   	
+	var getSearchText = /*[[${searchText}]]*/ '';
+	if(getSearchText == null) getSearchText = "";
+	
+	var getFreeOnly = /*[[${freeOnly}]]*/ '';
+	if(getFreeOnly == null) getFreeOnly = false;	
+	
+</script>            
+<!-- 검색결과 -->
+<script xmlns:v-on="http://www.w3.org/1999/xhtml">
+$(document).ready(function(){		
+	
+    $( window ).scroll( function() {
+        if ( $( this ).scrollTop() > 200 ) {
+          $( '.btn_top' ).fadeIn();
+        } else {
+          $( '.btn_top' ).fadeOut();
+        }
+      } );	      
+    
+	var searchApp = new Vue({
+		delimiters: ['[[', ']]']
+        , el: '#searchApp'
+        , data : {
+              cultcode: 0
+            , page_num: 1
+            , page_cnt: '20'
+            , is_list_empty : false
+            , commSubjcode : []
+            , search_result : []
+	        , search_text : getSearchText
+	        , search_subjcode : getSubjcode
+	        , scLeftShow : false
+	        , scRightShow : false
+	        , isStarted : false
+	        , freeOnly : getFreeOnly
+	        , lastUpdateDate : ''
+        }
+	    , ready:function(){
+		  	  this.$nextTick(function () {
+
+		  	  })	    	
+
+	    }
+	
+	    , updated: function () {
+	  	  this.$nextTick(function () {
+	          	var self = this;
+	          	
+	  		    if(self.isStarted) return;
+
+	        	var subjcode = this.search_subjcode;
+	        	if(subjcode == "ALL") {	        		
+		        	self.onNavTabScroll();
+		        	self.isStarted = true;
+	        		return;
+	        	}
+	        	
+	        	var navTab = document.getElementById("pills-tab");
+	        	
+	        	var currTab = document.getElementById('subjtab_' + subjcode);
+	         	
+	        	navTab.scrollLeft = currTab.offsetLeft - navTab.offsetLeft;
+	        	
+	        	console.log('navTabScrollToCurrent:function');
+	        	
+	        	self.onNavTabScroll();
+	        	
+	        	self.isStarted = true;
+	        	
+	  	  })
+	 	}	
+        , methods: {
+            chkAddBtn: function(cnt){
+                if(cnt < this.page_cnt){
+                    this.page_disabled = 1;
+                    this.add_btn_txt = "끝";
+                }else{
+                    this.page_disabled = 0;
+                    this.add_btn_txt = "More";
+                }
+            }
+            // input 리셋
+            , resetInput: function(){
+                this.search_text = "";
+                // 검색input 포커스.
+                $("#inputSearch").focus();
+            }
+       
+            , getSubjCommcode: function(){
+                var self = this;                
+                var url = './api/commcode/SeoulEvent/subjcode/';
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    if(res.length == 0){                    	
+                        alert(self.search_text + " ERROR");
+                        return;
+                    }                    
+                    self.commSubjcode = res;
+                })
+            }            
+            
+            , searchEventJson: function(){
+                var self = this;
+                // 페이지 조회 로드 수                
+                var url = './api/event?' 
+                		+ 'subjcode=' + self.search_subjcode 
+                		+ '&searchText=' + self.search_text 
+                		+ '&freeOnly=' + self.freeOnly ;          
+                
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    if(res.length == 0){
+                    	var message = "";
+                    	if (self.freeOnly) message += "[무료] "
+                    	if (self.search_subjcode != 'ALL'){
+                   			for (var i = 0; i < self.commSubjcode.length; i++) { 
+                   				if(self.commSubjcode[i].code == self.search_subjcode){
+                   					message += "(" + self.commSubjcode[i].codename + ") ";
+                   					break;
+                   				}
+                   			}
+                    	}  	
+                    	message += self.search_text;
+                    	
+                        alert(message + " 검색 결과가 없습니다.");
+                        self.goToBack();
+                        return;
+                    }
+                    
+                    self.search_result = res;
+                    self.chkAddBtn(res.length);
+                    //self.is_list_empty = false;
+
+                    var search_id = document.location.hash.replace("#", "")
+                    setMoveScroll(self.searchEventMore, search_id, this.page_disabled);
+                })
+            }
+            
+            // 더보기
+            , searchEventMore: function(btn_yn){
+                var self = this;
+                self.page_num = self.page_num + 1	// 페이지 번호  추가/
+                
+                var url = './api/event?' 
+                    + 'subjcode=' + self.search_subjcode 
+                    + '&searchText=' + self.search_text 
+                    + '&freeOnly=' + self.freeOnly                    
+                    + '&pageNo=' + self.page_num ;
+
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    
+                    for(key in res){
+                        self.search_result.push(res[key]);
+                    }
+
+                    self.chkAddBtn(res.length);
+
+                    if( btn_yn != "Y"){     // 버튼을 직접 눌렀을 경우, 스크롤이동 func 실행하지 않음
+                        // 뒤로가기를 눌렀을 경우 스크롤 위치로 이동
+                        var search_id = document.location.hash.replace("#", "")
+                        setMoveScroll(self.searchEventMore, search_id, this.page_disabled);
+                    }
+                    else{
+                    	displayLoading("N"); // 로딩 off
+                    
+                    }
+                })
+            }
+            
+            // 상세보기
+            , showDetail: function(cultCode){
+                var id = "search_" + cultCode
+                // hash 로 바로 저장해도 앞에 '#' 이 붙는다.
+                document.location.hash = id
+                moveEventDetail(cultCode);
+            }            
+            
+            // 검색하기 위해 창 이동
+            , searchEventMove:function(subjcode){
+            	displayLoading("Y"); // 로딩 off
+                var self = this;
+                self.search_subjcode = subjcode;
+				
+                var searchString = "subjcode="+self.search_subjcode 
+                                 + "&" + "searchText=" + encodeURIComponent(self.search_text) 
+                                 + "&" + "freeOnly=" + self.freeOnly
+                var url = './event?' + searchString; 
+                location.href=url;
+            }
+            
+            // go to main
+            , goToBack:function(){
+            	window.history.back();
+            }
+            , onNavTabScroll:function(){
+	          	var self = this;
+	        	var subjcode = this.search_subjcode;
+	        	
+             	var navTab = document.getElementById('pills-tab');
+             	
+             	if(navTab.scrollLeft == 0 ) self.scLeftShow = false;
+             	else self.scLeftShow = true;
+             	
+             	
+             	if((navTab.scrollLeft + navTab.offsetWidth) == navTab.scrollWidth) self.scRightShow = false;
+             	else self.scRightShow =  true;                          
+                
+            }            
+        }
+	})		
+		
+	searchApp.getSubjCommcode();	
+	searchApp.searchEventJson();
+	
+	$('#inputSearch').focus();
+	
+}
+)
+</script>
+
+
+
+<div class="container" id="container">
+
+<div id="searchApp" v-cloak>
+ 
+	<div class="sec2" v-if="search_result != ''" id="sec2">
+		<!-- 검색 위치 -->
+		<div class="form-group" style="margin-bottom: 10px;">
+			<div class="input-group" style="width:100%">
+                <div class="input-group-addon" v-on:click="resetInput" style="margin:0px;padding:3	px">
+                    <span class="glyphicon glyphicon-remove-sign"></span>
+                </div>
+				<input type="text" class="form-control input_custom input" 
+				id="inputSearch"
+				placeholder="공연명, 배우, 가수 등.."
+				v-model="search_text"
+				v-on:keydown.enter="searchEventMove(search_subjcode)"
+				>
+				<div class="input-group-addon" v-on:click="searchEventMove(search_subjcode)">
+					<span class="glyphicon glyphicon-search"></span>
+				</div>
+				<div class="input-group-addon" v-if="freeOnly" v-on:click="freeOnly=!freeOnly;searchEventMove(search_subjcode)" style="background-color: #337ab7;	font-size: 12px;color: #fff;margin:0px;padding:5px">
+					무료
+				</div>
+				<div class="input-group-addon" v-if="!freeOnly"  v-on:click="freeOnly=!self.freeOnly;searchEventMove(search_subjcode)" style="background-color: white;font-size: 12px;color: black;margin:0px;padding:5px">
+					무료
+				</div>								
+			</div>
+		</div>		
+		
+		<div class="form-group" id="subjtab" >
+			<transition name="slide-fade">		
+				<div class="scroller scroller-left" id="scroller-left" style="opacity:0.7" v-show="scLeftShow">
+				  	<i class="glyphicon glyphicon-chevron-left" ></i>
+				</div>
+		    </transition>
+		    <transition name="slide-fade">				
+  				<div class="scroller scroller-right" id="scroller-right" style="opacity:0.7" v-show="scRightShow">			
+				  	<i class="glyphicon glyphicon-chevron-right" ></i>				  
+  				</div>
+            </transition>  				
+				<ul class="nav nav-pills mb-3" v-on:scroll.passive="onNavTabScroll" id="pills-tab" role="tablist">				  				  
+				  <li class="nav-item"  v-on:click="searchEventMove('ALL')" v-bind:class=" {active: search_subjcode == 'ALL'} ">
+				    <a class="nav-link" id="pills-home-tab" data-toggle="pill" href="#ALL" role="tab" aria-controls="pills-home" aria-selected="true" style="padding-top: 6x;padding-bottom: 10px;padding-left: 6px;padding-right: 6px;font-size:14px;" >
+				           전체
+				    </a>
+				  </li>
+				  
+				  <li v-for=" (subjCode, idx) in commSubjcode " v-bind:id="'subjtab_' + subjCode.code" class="nav-item"   v-on:click="searchEventMove(subjCode.code)" v-bind:class=" {active: search_subjcode == subjCode.code}">				  
+				    <a class="nav-link" id="pills-profile-tab" data-toggle="pill" v-bind:href= "'#' + subjCode.code" role="tab" aria-controls="pills-profile" aria-selected="true" style="padding-top: 6x;padding-bottom: 10px;padding-left: 6px;padding-right: 6px;font-size:14px;">
+				    [[ subjCode.codename ]]</a>
+				  </li>
+						  				  
+				</ul>
+		</div>
+
+		<hr style="margin-top:10px; margin-bottom: 10px;" />
+		<div class="search_result">
+			<ul id="search_ul">
+			    <li v-for=" (event, idx) in search_result " v-bind:id=" 'search_' + event.cultcode">
+					<div class="sideLeft"
+						v-on:click="showDetail(event.cultcode)">
+						  <img v-bind:src="event.main_img" />
+					</div>
+					
+					
+					<div class="sideRight">
+						<a v-on:click="showDetail(event.cultcode)">
+							<div class="title" v-html="event.title"></div>
+						</a>												
+																		
+						<div class="author" style="float:left;margin-right:5px;">[[ event.codename ]] </div>
+						
+						<div class="author" style='color: #337ab7;' v-if=" event.is_free == 1">
+							(무료)
+						</div>	
+						<div style="clear:both;"></div>
+																								
+						<div class="pubdate">[[ event.strtdate | formatDate ]] ~ [[ event.end_date  | formatDate ]] </div>
+
+						<div class="author">[[ event.time ]]</div>
+						
+						<div class="author" style='float:left; margin-right:10px;' v-if=" event.gcode != '' ">
+							([[ event.gcode ]])    
+						</div>
+                		<div class="author" >
+                		 	[[ event.place ]]
+						</div>
+						<div style="clear:both;"></div>						
+
+					</div>
+				 </li>
+			</ul>
+			<div class="btn_full">
+				<button class="btn btn-default btn-lg" style="width:100%" 
+					:disabled="page_disabled == 1 ? true : false"
+					v-on:click=" searchEventMore('Y') "
+					>[[ add_btn_txt ]]</button>
+			</div>
+			<div class="btn_top">
+				<button class="btn btn-info btn-lg" style="border:0px;width:100%;background-color: rgba( 91, 192, 222, 0.5 );font-size: 14px;color: #fff;" 
+					onclick="moveScroll(0)"
+					>TOP <span class="glyphicon glyphicon-chevron-up"></span></button>
+
+			</div>
+		</div>
+	</div>
+</div>
+</div>
+
+
+    </div>
+    <div class="footer headAndFoot" id="footerApp">
+        <div class="footer_link_url" style='margin-bottom: 15px;'>
+            <ul>                
+                <li>
+                <div style='float:left ; font-size:12px;'> 
+                    Updated : [[ lastUpdateDate | formatDate ]]
+                </div>
+                
+                <div style='float:right ; font-size:12px; padding-right:5px'> 
+                                자료저작권 : 서울특별시
+                </div>
+                <div style="clear:both;"></div>                 
+                </li>
+                <li>
+                <div style='float:right ; font-size:12px; padding-right:5px;'> 
+                    <br>
+                    <a href='http://blog.breakingthat.com/category/doing-%EC%84%9C%EC%9A%B8%EB%AC%B8%ED%99%94%ED%96%89%EC%82%AC/'> 개발자Blog </a>
+                    <br>
+                </div>
+                                  
+                </li>                
+            </ul>   
+        </div>
+        <!-- <footer-component></footer-component>   -->
+    </div>
+    
+    <br><br><br><br>
+</body>
+
+
+</html>

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=”shortcut icon” href=”favicon.ico”>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel=”shortcut icon” href="../assets/img/favicon.ico">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>서울시 행사 찾기 - MyLIst</title>
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- 부트스트랩 -->
+    <link rel="stylesheet" href="../assets/lib/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="../assets/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- <script src="https://unpkg.com/vue"></script> -->
+
+    <!-- Moment.js -->
+    <script type="text/javascript" src="../assets/lib/moment.js"></script>
+
+    <!-- 부트스트랩 스위치 -->
+    <link rel="stylesheet" href="../assets/lib/bootstrap-switch/bootstrap-switch.min.css" />
+    <script type="text/javascript" src="../assets/lib/bootstrap-switch/bootstrap-switch.min.js"></script>
+
+    <!-- bar-rating -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../assets/lib/bar-rating/fontawesome-stars.css" />
+    <script type="text/javascript" src="../assets/lib/bar-rating/jquery.barrating.min.js"></script>
+
+    <!-- select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+
+
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="../assets/css/css_reset.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/eventseoul.css?ver=1.2">
+    <link rel="stylesheet" href="../assets/css/customer.css">
+    <!-- 커스텀 JS -->
+    <script type="text/javascript" src="../assets/js/comm.js?ver=1.2"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116953318-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-116953318-1');        
+        
+    </script>
+</head>
+<script>
+
+$(document).ready(function(){
+    
+    // nav app 
+    var navApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#navApp'
+        , data : {
+            user_id : ''
+            , user_email : ''
+            , login_tp: ''
+            , is_setting_active: false
+        }
+        , methods: {
+            onSettings: function(){
+                this.is_setting_active = !this.is_setting_active;
+            }
+
+            , settings_close: function(){
+                this.is_setting_active = false;
+            }
+	        // 닫기버튼 눌렀을 시(목차로 이동)
+	        , close: function(){
+	            window.history.back();
+	        }                 
+        }
+    });
+
+
+    // footer app
+    var footerApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#footerApp'
+    })
+})
+</script>
+<body>
+
+    <!-- 로딩 폼 -->
+    <div class="loading_form">
+        <div class="bg"></div>
+        <div class="loader"></div>
+    </div>
+
+    <div class="nav nav-custom headAndFoot" id="navApp" v-cloak>
+        <div class="header">
+        		<div class="menu_list_my">                
+	                <div class="left">
+	                    <a href="../">Doing</a>
+	                </div>
+	                <div class="middle">
+	                       <button class="btn btn-primary">MY LIST</button>
+	                </div>
+	                <div class="right">
+	                       <button class="btn btn-default" v-on:click="close">닫기</button>
+	                </div>
+				</div>		               
+        </div>
+    </div>
+
+    <div class="body_sec">
+
+<script th:inline="javascript">   	
+	var getSearchText = /*[[${searchText}]]*/ '';
+	if(getSearchText == null) getSearchText = "";	
+</script>	
+</script>            
+<!-- 검색결과 -->
+<script xmlns:v-on="http://www.w3.org/1999/xhtml">
+$(document).ready(function(){
+    $( window ).scroll( function() {
+        if ( $( this ).scrollTop() > 200 ) {
+          $( '.btn_top' ).fadeIn();
+        } else {
+          $( '.btn_top' ).fadeOut();
+        }
+      } );	    
+    
+	var searchApp = new Vue({
+		delimiters: ['[[', ']]']
+        , el: '#searchApp'
+        , data : {
+              cultcode: 0
+            , page_num: 1
+            , page_cnt: '20'
+            , is_list_empty : false
+            , search_result : []
+	        , search_text : getSearchText
+        }
+        , methods: {
+            chkAddBtn: function(cnt){
+                if(cnt < this.page_cnt){
+                    this.page_disabled = 1;
+                    this.add_btn_txt = "끝";
+                }else{
+                    this.page_disabled = 0;
+                    this.add_btn_txt = "More";
+                }
+            }         
+                   
+            , getMyListJson: function(){
+                var self = this;
+                // 페이지 조회 로드 수                
+                var url = '../api/mylist/' ;                	
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    if(res.length == 0){
+                    	self.search_result = res;
+                        return;
+                    }
+                    
+                    self.search_result = res;
+                    self.chkAddBtn(res.length);
+                    //self.is_list_empty = false;
+
+                    var search_id = document.location.hash.replace("#", "");
+                    setMoveScroll(self.getMyListMore, search_id, self.page_disabled);
+                })
+            }
+            
+            // 더보기
+            , getMyListMore: function(btn_yn){
+                var self = this;
+                self.page_num = self.page_num + 1	// 페이지 번호  추가/
+                
+                var url = '../api/mylist?pageNo=' + self.page_num; 
+
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    for(key in res){
+                        self.search_result.push(res[key]);
+                    }
+
+                    self.chkAddBtn(res.length);
+
+                    if( btn_yn != "Y"){     // 버튼을 직접 눌렀을 경우, 스크롤이동 func 실행하지 않음
+                        // 뒤로가기를 눌렀을 경우 스크롤 위치로 이동
+                        var search_id = document.location.hash.replace("#", "");
+                        setMoveScroll(self.getMyListMore, search_id, self.page_disabled);
+                    }
+                })
+            }
+            
+            // 상세보기
+            , showDetail: function(cultCode){
+                var id = "search_" + cultCode
+                // hash 로 바로 저장해도 앞에 '#' 이 붙는다.
+                document.location.hash = id
+                var url = "../event/" + cultCode;
+                location.href=url;                
+            }
+                        
+            // go to main
+            , goToBack:function(){
+            	window.history.back();
+            }                        
+            
+        }
+	})		
+	
+	//$("#inputSearchSec2").focus();
+	
+	searchApp.getMyListJson();		
+}
+)
+</script>
+
+
+<div class="container">
+<div id="searchApp" v-cloak>
+
+	<div class="sec2">
+		<!-- 검색 위치 -->
+        <!-- 닫기 -->        
+		<div class="sec_empty" v-if="search_result.length <= 0">
+			MYLIST(찜)가 없습니다.
+		</div>
+
+		<hr style="margin-top:10px; margin-bottom: 10px;" />
+		<div class="search_result" v-if="search_result.length > 0">
+			<ul id="search_ul">
+			    <li v-for=" (event, idx) in search_result " v-bind:id=" 'search_' + event.cultcode">			
+					<div class="sideLeft"
+						v-on:click="showDetail(event.cultcode)">
+						<img v-bind:src="event.main_img" />
+					</div>
+					
+					<div class="sideRight">
+						<a v-on:click="showDetail(event.cultcode)">
+							<div class="title" v-html="event.title"></div>
+						</a>
+						<div class="author" style="float:left;margin-right:5px;">[[ event.codename ]] </div>
+						
+						<div class="author" style='color: #337ab7;' v-if=" event.is_free == 1">
+							(무료)
+						</div>	
+						<div style="clear:both;"></div>
+						
+
+						<div class="pubdate" v-if=" getToday() <= event.end_date"> [[ event.strtdate | formatDate ]] ~ [[ event.end_date  | formatDate ]] </div>
+						
+						<div class="pubdate_end" v-if=" getToday() > event.end_date"> [[ event.strtdate | formatDate ]] ~ [[ event.end_date  | formatDate ]] (종료) </div>
+						
+						<div class="author">[[ event.time ]]</div>
+						
+						<div class="author" style='float:left; margin-right:10px;' v-if=" event.gcode != '' ">
+							([[ event.gcode ]])    
+						</div>
+                		<div class="author" >
+                		 	[[ event.place ]]
+						</div>
+						<div style="clear:both;"></div>						
+
+					</div>
+				 </li>
+			</ul>
+			<div class="btn_full">
+				<button class="btn btn-default btn-lg" style="width:100%" 
+					:disabled="page_disabled == 1 ? true : false"
+					v-on:click=" getMyListMore('Y') "
+					>[[ add_btn_txt ]]</button>
+			</div>
+			<div class="btn_top">
+				<button class="btn btn-info btn-lg" style="border:0px;width:100%;background-color: rgba( 91, 192, 222, 0.5 );font-size: 14px;color: #fff;" 
+					onclick="moveScroll(0)"
+					>TOP <span class="glyphicon glyphicon-chevron-up"></span></button>
+	
+			</div>					
+		</div>
+	</div>
+</div>
+</div>
+
+
+    </div>
+    <div class="footer headAndFoot" id="footerApp">
+        <footer-component></footer-component>         
+    </div>
+    
+    <br><br><br><br><br>
+</body>
+
+
+</html>

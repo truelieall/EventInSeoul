@@ -1,0 +1,80 @@
+@import url(http://fonts.googleapis.com/earlyaccess/nanumgothic.css);
+body{
+	font-size: 14px;
+	font-family: 'Nanum Gothic', serif;
+ /*
+ 	고정되는 창을 쓰면 추가되어야 할 옵션
+ 	min-height: 2000px;
+	padding-top: 70px;
+*/
+	height: 100%;
+}
+
+
+
+[v-cloak] {display: none;}
+
+/*공통*/
+
+/** 로딩, 회전하는 원 */
+.loading_form{width: 100%; height: 100%; position: fixed; z-index: 10000;
+	display: none;
+}
+.loading_form .bg{background: #fff; width: 100%; height: 100%; position: fixed;
+	opacity: 0.9;
+}
+.loading_form .loader {
+	margin: 0 auto;
+	margin-top: 35%;
+	z-index: 10001;
+	border: 5px solid #f3f3f3;
+	-webkit-animation: spin 1s linear infinite;
+	animation: spin 1s linear infinite;
+	border-top: 5px solid #555;
+	border-radius: 50%;
+	width: 50px;
+	height: 50px;
+}
+/* Safari */
+@-webkit-keyframes spin {
+	0% { -webkit-transform: rotate(0deg); }
+	100% { -webkit-transform: rotate(360deg); }
+}
+@keyframes spin {
+	0% { transform: rotate(0deg); }
+	100% { transform: rotate(360deg); }
+}
+
+
+
+.hidden{display: none;}
+
+.colorBlack{color: #000 !important;}
+.colorWhite{color: #fff !important;}
+.colorBlue{color: #1336FF !important;}
+.colorRed{color: #ff0000 !important;}
+
+.marginTop10{margin-top: 10px !important;}
+.textRight{text-align: right !important;}
+.textLeft{text-align: left !important;}
+
+.floatLeft{float:left !important;}
+.floatRight{float:right !important;}
+
+/************************************ width */
+.fullWidth{width:100% !important;}
+.halfWidth{width:49% !important;}
+
+
+.slide-fade-enter-active {
+  transition: all .3s ease;
+  opacity:0.7
+}
+.slide-fade-leave-active {
+  transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+  opacity:0.7
+}
+.slide-fade-enter, .slide-fade-leave-active {
+  padding-left: 10px;
+  opacity: 0;
+}

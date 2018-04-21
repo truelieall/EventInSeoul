@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel=”shortcut icon” href=”favicon.ico”>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel=”shortcut icon” href="../assets/img/favicon.ico">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <title>서울시 행사 찾기</title>
+    
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+    <!-- 부트스트랩 -->
+    <link rel="stylesheet" href="../assets/lib/bootstrap/css/bootstrap.min.css" />
+    <script type="text/javascript" src="../assets/lib/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Vue -->
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <!-- <script src="https://unpkg.com/vue"></script> -->
+
+    <!-- Moment.js -->
+    <script type="text/javascript" src="../assets/lib/moment.js"></script>
+
+    <!-- 부트스트랩 스위치 -->
+    <link rel="stylesheet" href="../assets/lib/bootstrap-switch/bootstrap-switch.min.css" />
+    <script type="text/javascript" src="../assets/lib/bootstrap-switch/bootstrap-switch.min.js"></script>
+
+    <!-- bar-rating -->
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/latest/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="../assets/lib/bar-rating/fontawesome-stars.css" />
+    <script type="text/javascript" src="../assets/lib/bar-rating/jquery.barrating.min.js"></script>
+
+    <!-- select2 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/js/select2.min.js"></script>
+
+
+    <!-- 커스텀 CSS -->
+    <link rel="stylesheet" href="../assets/css/css_reset.css">
+    <link rel="stylesheet" href="../assets/css/base.css">
+    <link rel="stylesheet" href="../assets/css/eventseoul.css?ver=1.2">
+    <link rel="stylesheet" href="../assets/css/customer.css">
+    
+    <!-- 커스텀 JS -->
+    <script type="text/javascript" src="../assets/js/comm.js?ver=1.2"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-116953318-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-116953318-1');
+
+        
+    </script>
+</head>
+<script>
+$(document).ready(function(){
+    // nav app 
+    var navApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#navApp'
+        , data : {
+            user_id : ''
+            , user_email : ''
+            , login_tp: ''
+            , is_setting_active: false
+        }
+        , methods: {
+            onSettings: function(){
+                this.is_setting_active = !this.is_setting_active;
+            }
+            , logout: function(event){
+                var url = "/auth/logout"
+                $.get(url, function(rtn){
+                    location.href="/"
+                })
+            }
+            , settings_close: function(){
+                this.is_setting_active = false;
+            }
+            , close: function(){
+                window.history.back();
+            }                  
+        }
+    });
+
+
+    // footer app
+    var footerApp = new Vue({
+        delimiters: ['[[', ']]']
+        , el: '#footerApp'
+    })
+})
+</script>
+<body>		
+    <!-- 로딩 폼 -->
+    <div class="loading_form">
+        <div class="bg"></div>
+        <div class="loader"></div>
+    </div>
+
+    <div class="nav nav-custom headAndFoot" id="navApp" v-cloak>
+        <div class="header">
+                <div class="menu_list_my">                
+                    <div class="left">
+                        <a href="../">Doing</a>
+                    </div>
+                    <div class="right">
+                           <button class="btn btn-default" v-on:click="close">닫기</button>
+                    </div>
+                </div>      
+        </div>
+    </div>
+     
+
+    <div class="body_sec">	
+	
+	<script th:inline="javascript">
+    	var getCultcode = /*[[${cultcode}]]*/ '';
+    	var cookieUserId = getCookie("seoulEventUserId");
+	</script>
+	
+<script xmlns:v-on="http://www.w3.org/1999/xhtml">
+$(document).ready(function(){	
+	var todayDate = getToday();
+	
+	var eventDetailApp = new Vue({
+		delimiters: ['[[', ']]']
+        , el: '#eventDetailApp'
+        , data : {  
+              cultcode:  getCultcode
+            , userId : cookieUserId
+            , get_result : []	        
+    		, mylist : []	
+	        , event_like_yn: "N"
+	                // 더보기 여부	                
+            , more_program: false
+            , more_contents: false
+            , more_player: false
+            , more_etc_desc: false
+            , userIdTemp : []
+			, today : todayDate
+        }
+        , methods: {
+	        // 찜하기 버튼
+	        touchLike: function(){
+	        	
+		        var self = this;	        	
+	        	var like_yn;	        	
+		        
+	        	if (   self.userId == null
+	        		|| self.userId == ''){
+			        var url = '../api/user'
+			        var data = {
+			              user_id: ''
+			            , user_type: 'tempUser'
+			        }
+		            displayLoading("Y"); // 로딩 on
+		            
+			        postJSON( url, data )
+				        .done(function (data) {
+			                // 성공   
+		                    setCookie("seoulEventUserId",data, 3650);
+		                    self.userId = data;
+				        })
+				        .fail(function (response, status) {
+				        	alert("fail response : " + response);
+				        	alert("fail status : " + status);
+				        	return;
+				        })
+				        .always(function(){  
+			              displayLoading("N"); // 로딩 off				        	
+				          //do something useful in either case
+				          //like remove the spinner
+		        	});		            
+				}
+				
+		        var data;
+		        
+	        	if(self.event_like_yn == 'Y'){     
+	        		if(self.today > self.get_result.end_date){
+		        		if (!confirm("종료된 행사는 다시 검색되지 않습니다.\n삭제하시겠습니까?")) return;
+	        		}
+	        		like_yn='N';
+	        		data = self.mylist;   		
+	        	}
+	        	else{
+	        		like_yn='Y';
+	        		data = {
+				              "user_id": self.userId
+				            , "cultcode": self.cultcode
+				           }
+	        	}
+	        	
+			    var url = '../api/mylist/' + like_yn
+			    
+		        displayLoading("Y"); // 로딩 on
+		        
+		        postJSON( url, data )
+			        .done(function (data) {			           
+			            self.event_like_yn = like_yn;
+			            if(self.event_like_yn == 'Y'){			            	
+			            	eventDetailApp.getMylistExists();
+			            	showalert("MyList에 추가 되었습니다.","alert-info", self.mylist.list_no);
+			            }else{
+			            	showalert("MyList에서 삭제되었습니다.","alert-success", self.mylist.list_no);
+			            }
+			            
+			        })
+			        .fail(function (response, status) {
+			        	alert("fail response : " + response);
+			        	alert("fail status : " + status);
+			        	return;
+			        })
+			        .always(function(){  
+			          displayLoading("N"); // 로딩 off
+		        });
+
+	        }        
+        
+	        // 더보기 클릭 - 목차
+	        , clickMore: function(kind){
+	            if (kind == "program")
+	                this.more_program = !this.more_program;
+	            else if(kind == "contents")
+	                this.more_contents = !this.more_contents;
+	            else if(kind == "player")
+	                this.more_player = !this.more_player;
+	            else if(kind == "etc_desc")
+	                this.more_etc_desc = !this.more_etc_desc
+	        }        
+	        
+            , getMylistExists: function(){
+            	
+                var self = this;
+                
+            	if(  self.userId == null || self.userId == ''){
+            		self.event_like_yn = 'N';
+            		return; 
+            	}          
+                // 페이지 조회 로드 수
+                var url = '../api/mylist/exists?cultcode=' + self.cultcode;
+
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    if (res == null || res == ''){
+                    	self.event_like_yn = 'N';
+                        return;                    	
+                    }
+                    else{
+                    	self.mylist = res;
+                    	self.event_like_yn = 'Y';
+                    }                    
+                })
+            } 	        
+	        
+            , getEventDetail: function(){
+                var self = this;
+                // 페이지 조회 로드 수
+                var url = '../api/event/' + self.cultcode;
+
+                displayLoading("Y"); // 로딩 on
+                $.get(url, function(res){
+                    displayLoading("N"); // 로딩 off
+                    if(res.length == 0){
+                        alert("검색결과가 없습니다.");
+                        //self.is_list_empty = true;      // 검색결과 없을때 화면보여주기 여부 Y
+                        //$("#inputSearchSec1").focus();
+                        return;
+                    }
+                    
+                    self.get_result = res;
+                    //self.chkAddBtn(res.length);
+                    //self.is_list_empty = false;
+
+                    //var search_id = document.location.hash.replace("#", "")                    
+                })
+            }            
+            
+            // 상세보기
+            , showDetail: function(cultCode){
+                //var id = "search_" + idx
+                // hash 로 바로 저장해도 앞에 '#' 이 붙는다.
+                //document.location.hash = id
+                moveEventDetail(cultCode)
+            }
+            
+        }
+	})
+
+	eventDetailApp.getEventDetail();
+	eventDetailApp.getMylistExists();
+})
+</script>
+
+
+<div id="eventDetailApp" v-cloak>
+    <div class="event_detail">
+        <div class="container">
+            <div class="art1">
+                <div class="sideLeft">
+                    <a v-bind:href= 'get_result.main_img'> <img v-bind:src="get_result.main_img"> </a>
+                </div>
+                <div class="sideRight">
+                    <div class="title" v-html="get_result.title" ></div>
+                    <div class="pubdate_end" v-if="today > get_result.end_date"> [[ get_result.strtdate | formatDate ]] ~ [[ get_result.end_date  | formatDate]] (종료) </div>
+                    <div class="pubdate" v-if="today <= get_result.end_date">[[ get_result.strtdate | formatDate ]] ~ [[ get_result.end_date  | formatDate]]</div>
+                    <div class="author">[[ get_result.codename ]]</div>
+                    <div class="author">[[ get_result.time ]]</div>
+                </div>
+            </div>
+        </div>
+        
+
+        
+        <!-- 여러 버튼 들 -->
+        <div class="art2">
+            <div class="btn_event_area">
+
+			<center>
+                <div class="reading">
+                    <a v-on:click="touchLike()"
+                       v-bind:class=" {active: event_like_yn =='Y'} ">
+                        <img src="../assets/img/icon/i-like-bf.png"
+                             v-show=" event_like_yn=='N' " />
+                        <img src="../assets/img/icon/i-like.png"
+                             v-show=" event_like_yn=='Y' " />
+                        To MyList
+                    </a>
+                </div>                
+			</center>
+
+            </div>
+        </div>
+
+        <!-- 상세정보 -->
+        <div class="container">
+            <div class="full_desc">
+                <div class="title">Title</div>
+                <div class="info" v-if=" get_result.use_trgt != '' "> [[ get_result.use_trgt ]] </div>
+
+                <div class="body"                     
+                     v-html="get_result.title"></div>
+            </div>
+        </div>
+
+         <!-- 상세정보 -->
+        <div class="container">
+            <div class="full_desc">
+                <div class="title" style='float:left; display:table-cell;vertical-align:middle; margin-right:10px;'>장소</div>
+				<div class="body" style='float:left; display:table-cell;vertical-align:middle; margin-right:5px;' v-if=" get_result.gcode != '' ">( [[ get_result.gcode ]] )</div>                
+                <div class="body" style='float:left; display:table-cell;vertical-align:middle;'> [[ get_result.place ]] </div>
+				<div style="clear:both;"></div>
+            </div>
+        </div>
+        
+         <!-- 상세정보 -->
+        <div class="container">
+            <div class="full_desc">
+                <div class="title" style='float:left; display:table-cell;vertical-align:middle; margin-right:10px;'>시간</div>
+                <div class="body" style='float:left; display:table-cell;vertical-align:middle;'> [[ get_result.time ]] </div>
+				<div style="clear:both;"></div>
+            </div>
+        </div>        
+        
+         <!-- 상세정보 -->
+        <div class="container">
+            <div class="full_desc">
+                <div class="title" style='float:left; display:table-cell;vertical-align:middle; margin-right:10px;'>이용료</div>
+                <div class="body" style='float:left; display:table-cell;vertical-align:middle;'> [[ get_result.use_fee ]] </div>
+				<div style="clear:both;"></div>
+            </div>
+        </div>
+
+         
+        
+        <!-- Program -->
+        <div class="container" v-if=" get_result.program != '' ">
+            <div class="toc">
+                <div class="title">
+           Program
+                </div>
+                <div class="body"
+                     v-bind:class=" { active: more_program } "
+                     v-html="get_result.program"></div>
+                <div class="more"
+                     v-on:click="clickMore('program')">
+                    더보기
+                    <span class="glyphicon glyphicon-menu-down" v-show="more_program == false"></span>
+                    <span class="glyphicon glyphicon-menu-up" v-show="more_program == true"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 출연진 -->        
+        <div class="container" v-if=" get_result.player != '' ">
+            <div class="toc">
+                <div class="title">
+                   출연진
+                </div>
+                <div class="body"
+                     v-bind:class=" { active: more_player } "
+                     v-html="get_result.player"></div>
+                <div class="more"
+                     v-on:click="clickMore('player')">
+                    더보기
+                    <span class="glyphicon glyphicon-menu-down" v-show="more_player == false"></span>
+                    <span class="glyphicon glyphicon-menu-up" v-show="more_player == true"></span>
+                </div>
+            </div>
+        </div>                
+        
+        <!-- 세부내용(contents) -->
+        <div class="container" v-if=" get_result.contents != '' ">
+            <div class="authors">
+                <div class="title">
+                   세부내용
+                </div>
+                <div class="body"
+                     v-bind:class=" { active: more_contents } ">
+                    
+                <div class="author_name" v-html="get_result.contents"></div>                    
+                    
+                </div>
+                <div class="more"
+                     v-on:click="clickMore('contents')">
+                    더보기
+                    <span class="glyphicon glyphicon-menu-down" v-show="more_contents == false"></span>
+                    <span class="glyphicon glyphicon-menu-up" v-show="more_contents == true"></span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 기타사항 -->
+        <div class="container" v-if=" get_result.etc_desc != '' ">
+            <div class="full_desc">
+                <div class="title">기타사항</div>
+                <div class="body"
+                    v-bind:class=" { active: more_etc_desc } "
+                    v-html="get_result.etc_desc">
+                </div>
+                <div class="more"
+                     v-on:click="clickMore('etc_desc')">
+                    더보기
+                    <span class="glyphicon glyphicon-menu-down" v-show="more_etc_desc == false"></span>
+                    <span class="glyphicon glyphicon-menu-up" v-show="more_etc_desc == true"></span>
+                </div>
+            </div>
+        </div>
+        
+         <!-- 관련link -->
+        <div class="container" v-if=" get_result.org_link != '' ">
+            <div class="full_desc">
+                <div class="title" style='float:left; display:table-cell;vertical-align:middle; margin-right:10px;'>관련Link</div>
+                <div class="bodylink" style='float:left; display:table-cell;vertical-align:middle;'> 
+                	<a v-bind:href= 'httpStrTrans(get_result.org_link)'> [[ get_result.org_link ]] </a> 
+                </div>
+				<div style="clear:both;"></div>
+            </div>
+        </div>
+        
+        
+         <!-- 문의처 -->
+        <div class="container"  v-if=" get_result.inquiry != '' ">
+            <div class="full_desc">
+                <div class="title" style='float:left; display:table-cell;vertical-align:middle; margin-right:10px;'>문의처</div>
+                <div class="body" style='float:left; display:table-cell;vertical-align:middle;'> [[ get_result.inquiry ]] </div>
+				<div style="clear:both;"></div>
+            </div>
+        </div>                
+                   
+    </div>
+
+    <!-- 맨위로 이동 -->
+    <div class="btn_full">
+        <button class="btn btn-default btn-lg" style="width:100%"
+                onclick="moveScroll(0)"
+        >TOP <span class="glyphicon glyphicon-chevron-up"></span></button>
+    </div>
+
+	<div id="alert_placeholder" class="alert_msg"></div>
+
+
+    </div>
+    <div class="footer headAndFoot" id="footerApp">
+        <footer-component></footer-component>
+    </div>
+	
+</body>
+
+
+
+</html>
