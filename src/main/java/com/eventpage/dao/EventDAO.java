@@ -16,7 +16,7 @@ public interface EventDAO {
 
     void deleteEvent(String createdate, int cultCode);
 
-    void deleteEvents(String createdate);
+    int deleteEvents(String createdate);
     
     List<Seoulevent> getAllCurrentEventsList();
     

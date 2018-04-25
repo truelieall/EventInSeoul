@@ -91,7 +91,12 @@ public class EventBatchServiceImpl implements EventBatchService {
         
         String today = CommUtil.getToday();
 
-        eventDAO.deleteEvents(today);
+        int deleteCount = eventDAO.deleteEvents(today);
+        
+        if(deleteCount > 0) {
+            eventCacheDAO.clearCache();
+            eventCacheDAO.setCacheByEvents(today);
+        }
         
         boolean moreEvents = true; 
         int callPageNo = 1;

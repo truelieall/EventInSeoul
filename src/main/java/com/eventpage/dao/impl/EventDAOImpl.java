@@ -114,11 +114,11 @@ public class EventDAOImpl implements EventDAO {
     }
 
     @Override
-    public void deleteEvents(String createdate) {
+    public int deleteEvents(String createdate) {
 
         String hql = "delete FROM Seoulevent as evnt WHERE evnt.createdate = ?";
 
-        entityManager.createQuery(hql).setParameter(1, createdate).executeUpdate();
+        return entityManager.createQuery(hql).setParameter(1, createdate).executeUpdate();
 
     }
 
