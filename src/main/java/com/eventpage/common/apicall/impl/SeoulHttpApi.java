@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import static com.eventpage.common.Constants.*;
 /**
  * @Date : 2018. 4. 5. 
  * @author Kim jongseong
@@ -44,12 +45,17 @@ public class SeoulHttpApi implements RestHttpApi {
     
     @Override
     public JsonNode getEventResult() {
-        return getResult("SearchConcertDetailService");
+        return getResult("SearchConcertDetailService", 1);
+    }    
+    
+    @Override
+    public JsonNode getEventResult(int pageNo) {
+        return getResult("SearchConcertDetailService", pageNo);
     }
 
     @Override
     public JsonNode getEventSubjcodeResult() {
-        return getResult("SearchConcertSubjectCatalogService");
+        return getResult("SearchConcertSubjectCatalogService", 1);
     }
 
     /**
@@ -59,22 +65,24 @@ public class SeoulHttpApi implements RestHttpApi {
      * @Overrided
      */
     @Override
-    public JsonNode getResult(String ServiceName) {
+    public JsonNode getResult(String ServiceName, int PageNo) {
 
         JsonNode feedback = null;
 
         RestTemplate restTemplate = getRestTemplate();
 
         try {
-
-            String fUrl = url + "{key}/json/" + ServiceName + "/1/{requestSize}";
+            String startNo = String.valueOf((Integer.valueOf(requestSize)) * (PageNo-1) + 1);
+            String endNo = String.valueOf(Integer.valueOf(requestSize) * PageNo);
+            
+            String fUrl = url + "{key}/json/" + ServiceName + "/{startNo}/{endNo}";
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<String>(headers);
 
             HttpEntity<JsonNode> response = restTemplate.exchange(fUrl, HttpMethod.GET, requestEntity, JsonNode.class,
-                    key, requestSize);
+                    key, startNo, endNo);
 
             feedback = response.getBody();
 

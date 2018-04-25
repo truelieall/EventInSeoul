@@ -57,6 +57,10 @@ public class Constants {
             
             public boolean isOK() {            
                 return ApiResultStatus.OK == this;
+            }
+            
+            public boolean isNotFound() {            
+                return ApiResultStatus.NONE == this;
             }            
         }
         

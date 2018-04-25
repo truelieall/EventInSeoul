@@ -92,42 +92,31 @@ public class EventBatchServiceImpl implements EventBatchService {
         String today = CommUtil.getToday();
 
         eventDAO.deleteEvents(today);
-
-        JsonNode resultJson = restHttpApi.getEventResult();
-        JsonNode Service = resultJson.get("SearchConcertDetailService");
-        JsonNode result = Service.get("RESULT");
         
-        ApiResultStatus resultStatus = SeoulApiConst.getStatus(result.get("CODE").asText("")) ;        
+        boolean moreEvents = true; 
+        int callPageNo = 1;
+        ApiResultStatus resultStatus = ApiResultStatus.UNDF;
         
-        if(!resultStatus.isOK()) return resultStatus;
-        
-        JsonNode conList = Service.get("row");
-        long listCount = Service.get("list_total_count").longValue();
-        LOGGER.debug(">> LIST TOTAL COUNT :" + listCount + " - " + conList.size());
-
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
-
-        // 새로운 행사이거나, 정보변경이 확인될 경우만 Add 한다.        
-        for (JsonNode conJson : conList) {
-
-            Seoulevent event = objectMapper.convertValue(conJson, Seoulevent.class);
-            event.setStrtdate(event.getStrtdate().replace("-", ""));
-            event.setEnd_date(event.getEnd_date().replace("-", ""));
-
-            if (eventCacheDAO.getEventByCode(event.getCultcode()) != null) {
-                
-                Seoulevent legacyEvent = eventCacheDAO.getEventByCode(event.getCultcode());
-                
-                if (event.equals(legacyEvent)) continue;
+        while (moreEvents) {
+            
+            JsonNode resultJson = restCallAndAddEvents(today, callPageNo);            
+            JsonNode Service = resultJson.get("SearchConcertDetailService");
+            JsonNode result;
+            
+            if(Service == null) result = resultJson.get("RESULT");
+            else result = Service.get("RESULT");
+                         
+            resultStatus = SeoulApiConst.getStatus(result.get("CODE").asText("")) ;
+            
+            if(resultStatus.isNotFound()) moreEvents = false;
+            
+            if(callPageNo != 1 && resultStatus.isNotFound()) {
+                resultStatus = ApiResultStatus.OK;
             }
-
-            event.setCreatedate(today);
-            event.setFrstRegisterId("SYSTEM");
-            event.setLastUpdusrId("SYSTEM");
-            eventDAO.addEvent(event);
-
+            
+            if(!resultStatus.isOK()) return resultStatus;
+            
+            callPageNo++;
         }
 
         eventCacheDAO.clearCache();
@@ -136,6 +125,56 @@ public class EventBatchServiceImpl implements EventBatchService {
         LOGGER.debug("apiCallAndAddEvents - End");
         return resultStatus;
 
+    }
+
+    /**
+     * @Date : 2018. 4. 25. 
+     * @author Kim jongseong
+     * @Descrption : 
+     * @param today
+     */
+    private JsonNode restCallAndAddEvents(String today, int callPageNo) {
+        
+        JsonNode resultJson = restHttpApi.getEventResult(callPageNo);
+        JsonNode Service = resultJson.get("SearchConcertDetailService");
+        JsonNode result;
+        
+        if(Service == null) result = resultJson.get("RESULT");
+        else result = Service.get("RESULT");
+        
+        ApiResultStatus resultStatus = SeoulApiConst.getStatus(result.get("CODE").asText("")) ;        
+        
+        if(!resultStatus.isOK()) return resultJson;
+        
+        JsonNode conList = Service.get("row");
+   
+        ObjectMapper objectMapper = new ObjectMapper();
+   
+        objectMapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+   
+        // 새로운 행사이거나, 정보변경이 확인될 경우만 Add 한다.        
+        for (JsonNode conJson : conList) {
+   
+            Seoulevent event = objectMapper.convertValue(conJson, Seoulevent.class);
+            event.setStrtdate(event.getStrtdate().replace("-", ""));
+            event.setEnd_date(event.getEnd_date().replace("-", ""));
+   
+            if (eventCacheDAO.getEventByCode(event.getCultcode()) != null) {
+                
+                Seoulevent legacyEvent = eventCacheDAO.getEventByCode(event.getCultcode());
+                
+                if (event.equals(legacyEvent)) continue;
+            }
+   
+            event.setCreatedate(today);
+            event.setFrstRegisterId("SYSTEM");
+            event.setLastUpdusrId("SYSTEM");
+            eventDAO.addEvent(event);
+   
+        }
+        
+        return resultJson;
+        
     }
 
     /**

@@ -55,7 +55,7 @@ public class RestHttpApiTest {
     @Test
     public void getResult() {
                         
-        JsonNode resultJson = restHttpApi.getResult("XXX");
+        JsonNode resultJson = restHttpApi.getResult("XXX", 1);
         JsonNode result = resultJson.get("RESULT");
         
         SeoulApiConst.ApiResultStatus resultStatus = SeoulApiConst.getStatus(result.get("CODE").asText("")) ;        
