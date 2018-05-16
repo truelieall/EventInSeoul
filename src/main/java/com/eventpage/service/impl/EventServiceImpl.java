@@ -33,9 +33,12 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public Seoulevent getEventById(int cultCode) {
-        Seoulevent obj = eventCacheDAO.getEventByCode(cultCode);
-        ;
-        return obj;
+        
+        Seoulevent event = eventCacheDAO.getEventByCode(cultCode);
+        
+        if(event == null) event = eventDAO.getEventByCode(cultCode);
+        
+        return event;
     }
 
     @Override
@@ -84,7 +87,13 @@ public class EventServiceImpl implements EventService {
         List<Seoulevent> myEventlists = new ArrayList<Seoulevent>();
 
         for (Seouleventmylist mylist : mylists) {
-            myEventlists.add(eventCacheDAO.getEventByCode(mylist.getCultcode()));
+            
+            Seoulevent event = eventCacheDAO.getEventByCode(mylist.getCultcode());
+            
+            if(event == null) event = eventDAO.getEventByCode(mylist.getCultcode());
+            
+            myEventlists.add(event);
+            
         }
 
         return myEventlists;

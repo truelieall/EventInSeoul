@@ -8,7 +8,7 @@ public interface EventDAO {
     
     List<Seoulevent> getAllEvents();
 
-    Seoulevent getEventById(int cultCode);
+    Seoulevent getEventByCode(int cultcode);
 
     void addEvent(Seoulevent event);
 
@@ -18,7 +18,7 @@ public interface EventDAO {
 
     int deleteEvents(String createdate);
     
-    List<Seoulevent> getAllCurrentEventsList();
+    List<Seoulevent> getAllCurrentEventsList(String stndDate);
     
     List<Seoulevent> getEventsBySearchText(String subjcode, String searchText, int pageNo, boolean freeOnly);
 

@@ -20,8 +20,30 @@ public class EventDAOImpl implements EventDAO {
     private EntityManager entityManager;
 
     @Override
-    public Seoulevent getEventById(int cultCode) {
-        return entityManager.find(Seoulevent.class, cultCode);
+    public Seoulevent getEventByCode(int cultcode) {
+        
+        StringBuffer sqlB = new StringBuffer();
+
+        sqlB.append("SELECT  a.*                               ");
+        sqlB.append("  FROM  seoulevent a                      ");
+        sqlB.append("inner join                                ");
+        sqlB.append("   (                                      ");
+        sqlB.append("       SELECT                             ");
+        sqlB.append("           cultcode                       ");
+        sqlB.append("         , MAX(s.createdate) AS createdate");
+        sqlB.append("       FROM   seoulevent s                ");
+        sqlB.append("       WHERE  s.cultcode = :cultcode      ");
+        sqlB.append("       GROUP BY s.cultcode                ");
+        sqlB.append("   ) b                                    ");
+        sqlB.append("    on a.createdate = b.createdate        ");
+        sqlB.append("   and a.cultcode = b.cultcode            ");
+        sqlB.append("order by a.cultcode desc                  ");
+
+        Query nSql = entityManager.createNativeQuery(sqlB.toString(), Seoulevent.class)
+                                  .setParameter("cultcode", cultcode);
+
+        return (Seoulevent) nSql.getSingleResult();
+        
     }
 
     @SuppressWarnings("unchecked")
@@ -33,7 +55,7 @@ public class EventDAOImpl implements EventDAO {
     
     @SuppressWarnings("unchecked")
     @Override
-    public List<Seoulevent> getAllCurrentEventsList() {
+    public List<Seoulevent> getAllCurrentEventsList(String stndDate) {
 
         StringBuffer sqlB = new StringBuffer();
 
@@ -49,9 +71,11 @@ public class EventDAOImpl implements EventDAO {
         sqlB.append("   ) b                                    ");
         sqlB.append("    on a.createdate = b.createdate        ");
         sqlB.append("   and a.cultcode = b.cultcode            ");
+        sqlB.append(" WHERE a.end_date >= :toDay               ");        
         sqlB.append("order by a.cultcode desc                  ");
 
-        Query nSql = entityManager.createNativeQuery(sqlB.toString(), Seoulevent.class);
+        Query nSql = entityManager.createNativeQuery(sqlB.toString(), Seoulevent.class)
+                                  .setParameter("toDay", stndDate);
 
         return (List<Seoulevent>) nSql.getResultList();
     }
@@ -110,7 +134,7 @@ public class EventDAOImpl implements EventDAO {
 
     @Override
     public void deleteEvent(String createdate, int cultCode) {
-        entityManager.remove(getEventById(cultCode));
+        entityManager.remove(getEventByCode(cultCode));
     }
 
     @Override

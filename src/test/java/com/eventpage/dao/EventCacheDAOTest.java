@@ -38,7 +38,7 @@ public class EventCacheDAOTest {
     @Test
     public void getEventByCode(){        
         
-        List<Seoulevent> allEventList = eventDAO.getAllCurrentEventsList();         
+        List<Seoulevent> allEventList = eventDAO.getAllCurrentEventsList(CommUtil.getToday());         
                 
         Seoulevent event = eventCacheDAO.getEventByCode(allEventList.get(0).getCultcode());
         

@@ -64,7 +64,7 @@ public class EventCacheDAOImpl implements EventCacheDAO {
 
         Map<Integer, Seoulevent> resultMap = new HashMap<Integer, Seoulevent>();
 
-        List<Seoulevent> list = eventDAO.getAllCurrentEventsList();
+        List<Seoulevent> list = eventDAO.getAllCurrentEventsList(CommUtil.getToday());
 
         for (Seoulevent event : list) {
             resultMap.put(event.getCultcode(), event);
@@ -75,7 +75,7 @@ public class EventCacheDAOImpl implements EventCacheDAO {
 
     @Override
     public void setCacheByEvents(String stDate) {
-        List<Seoulevent> events = eventDAO.getAllCurrentEventsList();
+        List<Seoulevent> events = eventDAO.getAllCurrentEventsList(stDate);
         Cache ehCacheAll = ehCacheManager.getCache("SeoulEventAll");
         Cache ehCacheAllPage = ehCacheManager.getCache("SeoulEventAllPage");
 

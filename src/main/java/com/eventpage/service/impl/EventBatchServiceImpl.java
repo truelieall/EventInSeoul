@@ -164,11 +164,12 @@ public class EventBatchServiceImpl implements EventBatchService {
             event.setStrtdate(event.getStrtdate().replace("-", ""));
             event.setEnd_date(event.getEnd_date().replace("-", ""));
    
-            if (eventCacheDAO.getEventByCode(event.getCultcode()) != null) {
-                
-                Seoulevent legacyEvent = eventCacheDAO.getEventByCode(event.getCultcode());
+            Seoulevent legacyEvent = eventCacheDAO.getEventByCode(event.getCultcode());
+            
+            if (legacyEvent != null) {
                 
                 if (event.equals(legacyEvent)) continue;
+                
             }
    
             event.setCreatedate(today);

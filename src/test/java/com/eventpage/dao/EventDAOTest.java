@@ -37,7 +37,7 @@ public class EventDAOTest {
     @Test
     public void getAllEventsList(){        
         
-        List<Seoulevent> allEventList = eventDAO.getAllCurrentEventsList();
+        List<Seoulevent> allEventList = eventDAO.getAllCurrentEventsList(CommUtil.getToday());
         
         assertNotNull(allEventList);
         assertTrue(allEventList.size() > 0);             
