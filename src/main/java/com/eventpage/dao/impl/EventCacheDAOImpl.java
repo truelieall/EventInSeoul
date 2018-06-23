@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
@@ -121,7 +122,7 @@ public class EventCacheDAOImpl implements EventCacheDAO {
     }
 
     @Override
-    @Cacheable(cacheNames = "SeoulEventAll", key = "#cultcode")
+    @Cacheable(cacheNames = "SeoulEventAll", key = "#cultcode", unless="#result==null")
     public Seoulevent getEventByCode(int cultcode) {
         simulateSlowService(cultcode);
         return null;
@@ -211,7 +212,10 @@ public class EventCacheDAOImpl implements EventCacheDAO {
             List strArr = ehCacheManager.getCacheManager().getCache(cacheName).getKeys();
             
             for (Object string : strArr) {
-                LOGGER.debug(cacheName + "-Member : " + String.format("%6s",string.toString()) + "=" + ehCacheManager.getCacheManager().getCache(cacheName).get(string).getObjectValue().toString());
+
+                LOGGER.debug(cacheName + "-Member : " + String.format("%6s",string.toString()) + "=" 
+                        + Optional.ofNullable( ehCacheManager.getCacheManager().getCache(cacheName).get(string).getObjectValue() ).orElse("NULL")
+                        );
             }
         }
     }
