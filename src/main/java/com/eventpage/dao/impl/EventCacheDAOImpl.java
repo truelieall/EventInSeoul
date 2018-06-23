@@ -209,8 +209,9 @@ public class EventCacheDAOImpl implements EventCacheDAO {
 
         for (String cacheName : cacheNames) {
             List strArr = ehCacheManager.getCacheManager().getCache(cacheName).getKeys();
+            
             for (Object string : strArr) {
-                LOGGER.debug(cacheName + "-Member : " + string.toString());
+                LOGGER.debug(cacheName + "-Member : " + String.format("%6s",string.toString()) + "=" + ehCacheManager.getCacheManager().getCache(cacheName).get(string).getObjectValue().toString());
             }
         }
     }

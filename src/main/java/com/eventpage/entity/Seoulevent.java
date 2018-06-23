@@ -99,6 +99,7 @@ public class Seoulevent implements Serializable {
     public Seoulevent() {
     }
     
+    @Override
     public boolean equals(Object other) {
         if (this == other) {
             return true;
@@ -134,4 +135,13 @@ public class Seoulevent implements Serializable {
     
         return false;
     }
+    
+    @Override
+    public String toString() {
+        return "Seoulevent [createdate=" + createdate 
+                + ", cultcode=" + String.format("%6s",cultcode)   
+                + ", agelimit=" + String.format("%6s",agelimit) 
+                + ", codename=" + codename + "]";
+    }    
+    
 }
